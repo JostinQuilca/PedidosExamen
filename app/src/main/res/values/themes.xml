@@ -1,0 +1,21 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Pedidos" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Paleta de colores primarios -->
+        <item name="colorPrimary">@color/orange_500</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/orange_200</item>
+        <item name="colorOnPrimaryContainer">@color/black</item>
+
+        <!-- Paleta de colores secundarios (opcional, pero bueno para consistencia) -->
+        <item name="colorSecondary">@color/orange_500</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/orange_200</item>
+        <item name="colorOnSecondaryContainer">@color/black</item>
+
+        <!-- Color de la barra de estado -->
+        <item name="android:statusBarColor">@color/orange_700</item>
+    </style>
+
+    <style name="Theme.Pedidos" parent="Base.Theme.Pedidos" />
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta de Naranjas -->
+    <color name="orange_200">#FFCC80</color> <!-- Naranja Claro -->
+    <color name="orange_500">#FF9800</color> <!-- Naranja Primario -->
+    <color name="orange_700">#F57C00</color> <!-- Naranja Oscuro -->
+
+    <!-- Colores base -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

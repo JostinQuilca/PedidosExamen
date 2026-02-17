@@ -1,0 +1,21 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme for dark mode. -->
+    <style name="Base.Theme.Pedidos" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Paleta de colores primarios para modo oscuro -->
+        <item name="colorPrimary">@color/orange_500</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimaryContainer">@color/orange_700</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+
+        <!-- Paleta de colores secundarios -->
+        <item name="colorSecondary">@color/orange_500</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondaryContainer">@color/orange_700</item>
+        <item name="colorOnSecondaryContainer">@color/white</item>
+
+        <!-- Color de la barra de estado -->
+        <item name="android:statusBarColor">@color/black</item>
+    </style>
+
+    <style name="Theme.Pedidos" parent="Base.Theme.Pedidos" />
+</resources>
