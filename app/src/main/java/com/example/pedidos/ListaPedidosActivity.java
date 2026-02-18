@@ -19,6 +19,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
@@ -49,22 +50,29 @@ public class ListaPedidosActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista_pedidos);
 
+        // Configuración Toolbar
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
+        // Enlazar Vistas
         rvPedidos = findViewById(R.id.rvPedidos);
         btnSincronizar = findViewById(R.id.btnSincronizar);
         progressBar = findViewById(R.id.progressBar);
         tvEmptyList = findViewById(R.id.tvEmptyList);
 
+        // Configurar RecyclerView
         rvPedidos.setLayoutManager(new LinearLayoutManager(this));
         adapter = new PedidoAdapter(listaDatos);
         rvPedidos.setAdapter(adapter);
 
+        // Cargar datos iniciales
         cargarPedidos();
 
+        // Listener Botón Sincronizar
         btnSincronizar.setOnClickListener(v -> sincronizarPendientes());
     }
 
@@ -73,7 +81,8 @@ public class ListaPedidosActivity extends AppCompatActivity {
         if (mostrar) {
             btnSincronizar.hide();
         } else {
-            if(!listaDatos.isEmpty()) btnSincronizar.show();
+            // Solo mostramos el botón si hay datos
+            if (!listaDatos.isEmpty()) btnSincronizar.show();
         }
     }
 
@@ -81,6 +90,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
         mostrarProgreso(true);
         executorService.execute(() -> {
             List<Pedido> pedidos = new ArrayList<>();
+            // Leemos TODAS las columnas necesarias, incluyendo fecha y coordenadas
             try (AdminSQLite admin = new AdminSQLite(this, "administracion", null, 1);
                  SQLiteDatabase db = admin.getReadableDatabase();
                  Cursor fila = db.rawQuery("SELECT id, cliente, detalle, foto_path, estado, telefono, direccion, tipo_pago, fecha, latitud, longitud FROM pedidos ORDER BY id DESC", null)) {
@@ -94,6 +104,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
                                 fila.getString(fila.getColumnIndexOrThrow("foto_path")),
                                 fila.getString(fila.getColumnIndexOrThrow("estado"))
                         );
+                        // Cargar campos opcionales de manera segura
                         p.telefono = fila.getString(fila.getColumnIndexOrThrow("telefono"));
                         p.direccion = fila.getString(fila.getColumnIndexOrThrow("direccion"));
                         p.tipoPago = fila.getString(fila.getColumnIndexOrThrow("tipo_pago"));
@@ -132,7 +143,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
             List<Pedido> paraEnviar = new ArrayList<>();
             for (Pedido p : listaDatos) {
                 if ("Pendiente".equals(p.estado)) {
-                    // CONVERSIÓN SEGURA DE IMAGEN
+                    // CONVERSIÓN SEGURA DE IMAGEN (Usando el método blindado de abajo)
                     if (p.fotoPath != null && !p.fotoPath.isEmpty()) {
                         p.fotoBase64 = convertirImagenABase64(p.fotoPath);
                     } else {
@@ -200,22 +211,61 @@ public class ListaPedidosActivity extends AppCompatActivity {
         });
     }
 
-    // --- CORRECCIÓN CRÍTICA: Evitar Crash si la imagen falla ---
+    // =========================================================================
+    //   MÉTODOS BLINDADOS PARA IMÁGENES (EVITAN OUT OF MEMORY ERROR)
+    // =========================================================================
+
     private String convertirImagenABase64(String path) {
+        // 1. Si no hay path, devolver vacío
+        if (path == null || path.isEmpty()) return "";
+
         try {
+            // 2. Configurar para LEER dimensiones sin cargar la imagen (ahorra memoria)
             BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 4; // Reducir tamaño
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(path, options);
+
+            // 3. Calcular factor de reducción (para que la imagen no pase de 800px)
+            options.inSampleSize = calcularInSampleSize(options, 800, 800);
+
+            // 4. Cargar la imagen reducida
+            options.inJustDecodeBounds = false;
             Bitmap bitmap = BitmapFactory.decodeFile(path, options);
 
-            if (bitmap == null) return ""; // Si la imagen no carga, devolvemos vacío en vez de crashear
+            if (bitmap == null) return "";
 
+            // 5. Comprimir a JPEG calidad 50%
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
             byte[] byteArray = outputStream.toByteArray();
-            return Base64.encodeToString(byteArray, Base64.DEFAULT);
-        } catch (Exception e) {
+
+            // 6. Reciclar memoria inmediatamente
+            bitmap.recycle();
+
+            // 7. Retornar Base64 sin saltos de línea (NO_WRAP)
+            return Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+        } catch (Throwable e) {
+            // Usamos 'Throwable' para atrapar errores graves de Memoria (OutOfMemoryError)
             e.printStackTrace();
-            return ""; // En caso de error, devolver cadena vacía
+            return ""; // Si falla, enviamos vacío pero NO CERRAMOS la app
         }
+    }
+
+    // Método auxiliar matemático para calcular cuánto reducir la foto
+    private int calcularInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+            // Calcular la potencia de 2 más grande que mantenga ambas dimensiones mayores a lo requerido
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
     }
 }

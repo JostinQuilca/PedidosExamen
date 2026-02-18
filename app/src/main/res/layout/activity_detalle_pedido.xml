@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#F5F7FA">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:elevation="0dp"
-        android:background="@android:color/transparent">
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbarDetalle"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#00796B"
-            app:titleTextColor="@android:color/white"
-            app:title="Detalle del Pedido"
-            app:navigationIcon="@drawable/abc_ic_ab_back_material"
-            app:navigationIconTint="@android:color/white"/>
-    </com.google.android.material.appbar.AppBarLayout>
+        android:layout_height="56dp"
+        android:background="#00796B"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detalle del Pedido"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -33,119 +31,114 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.google.android.material.card.MaterialCardView
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                android:layout_marginBottom="16dp">
+                android:background="@android:color/white"
+                android:padding="4dp"
+                android:layout_marginBottom="20dp">
+
                 <ImageView
                     android:id="@+id/imgFotoDetalle"
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
                     android:scaleType="centerCrop"
                     android:background="#EEEEEE"
-                    android:src="@drawable/ic_camera"/>
-            </com.google.android.material.card.MaterialCardView>
+                    android:src="@android:drawable/ic_menu_camera"/>
+            </FrameLayout>
 
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
-                android:layout_marginBottom="16dp">
-                <LinearLayout
+                android:orientation="vertical"
+                android:background="@android:color/white"
+                android:padding="20dp"
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CLIENTE"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#00796B"/>
+
+                <TextView
+                    android:id="@+id/tvClienteDetalle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:text="Nombre del Cliente"
+                    android:textSize="22sp"
+                    android:textColor="#37474F"
+                    android:layout_marginBottom="16dp"/>
 
-                    <TextView
-                        android:text="Cliente"
-                        android:textSize="12sp"
-                        android:textColor="#00796B"/>
-                    <TextView
-                        android:id="@+id/tvClienteDetalle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Juan Perez"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#37474F"
-                        android:layout_marginBottom="12dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DETALLE DEL PEDIDO"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#00796B"/>
 
-                    <TextView
-                        android:text="Pedido / Detalle"
-                        android:textSize="12sp"
-                        android:textColor="#00796B"/>
-                    <TextView
-                        android:id="@+id/tvPedidoDetalle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Descripción completa del pedido..."
-                        android:textSize="16sp"
-                        android:textColor="#546E7A"
-                        android:layout_marginBottom="12dp"/>
+                <TextView
+                    android:id="@+id/tvPedidoDetalle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Descripción..."
+                    android:textSize="18sp"
+                    android:textColor="#546E7A"
+                    android:layout_marginBottom="16dp"/>
 
-                    <TextView
-                        android:text="Fecha de Creación"
-                        android:textSize="12sp"
-                        android:textColor="#00796B"/>
-                    <TextView
-                        android:id="@+id/tvFechaDetalle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2023-10-25 14:30"
-                        android:textSize="14sp"
-                        android:textColor="#37474F"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FECHA Y HORA"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#00796B"/>
 
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:id="@+id/tvFechaDetalle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="--/--/----"
+                    android:textSize="16sp"
+                    android:textColor="#37474F"/>
+            </LinearLayout>
 
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white">
-                <LinearLayout
+                android:orientation="vertical"
+                android:background="@android:color/white"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UBICACIÓN GPS"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#00796B"/>
+
+                <TextView
+                    android:id="@+id/tvUbicacionDetalle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:text="Lat: 0.0, Lon: 0.0"
+                    android:textSize="14sp"
+                    android:textColor="#37474F"
+                    android:layout_marginBottom="16dp"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="8dp">
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/ic_menu_mylocation"
-                            app:tint="#00796B"/>
-                        <TextView
-                            android:id="@+id/tvUbicacionDetalle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Lat: -2.1234, Lon: -79.1234"
-                            android:textSize="14sp"
-                            android:layout_marginStart="8dp"
-                            android:textColor="#37474F"/>
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvEstadoDetalle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Estado: Pendiente"
-                        android:textStyle="bold"
-                        android:textColor="#FFB74D"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:id="@+id/tvEstadoDetalle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="ESTADO: PENDIENTE"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="#FFB74D"/>
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
