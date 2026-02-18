@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Paleta de Naranjas -->
-    <color name="orange_200">#FFCC80</color> <!-- Naranja Claro -->
-    <color name="orange_500">#FF9800</color> <!-- Naranja Primario -->
-    <color name="orange_700">#F57C00</color> <!-- Naranja Oscuro -->
+    <color name="primary">#00796B</color>      <color name="primary_variant">#004D40</color>
+    <color name="secondary">#26A69A</color>    <color name="background_light">#F5F7FA</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="text_primary">#263238</color>
+    <color name="text_secondary">#546E7A</color>
 
-    <!-- Colores base -->
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="state_pending">#FFB74D</color>    <color name="state_synced">#66BB6A</color>     <color name="error_soft">#EF5350</color>
+
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <color name="orange_500">@color/primary</color>
+    <color name="orange_200">@color/secondary</color>
+    <color name="orange_700">@color/primary_variant</color>
 </resources>

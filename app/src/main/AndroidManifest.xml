@@ -42,7 +42,13 @@
 
         <activity
             android:name=".ListaPedidosActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".MainActivity"/>
+
+        <activity
+            android:name=".DetallePedidoActivity"
+            android:exported="false"
+            android:parentActivityName=".ListaPedidosActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -53,6 +59,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 
 </manifest>

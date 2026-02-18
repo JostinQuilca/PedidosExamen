@@ -3,22 +3,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="12dp"
         android:gravity="center_vertical">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgFotoItem"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:src="@mipmap/ic_launcher"
             android:scaleType="centerCrop"
-            android:layout_marginEnd="16dp"/>
+            android:background="#ECEFF1"
+            android:layout_marginEnd="16dp"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -30,26 +36,44 @@
                 android:id="@+id/lblClienteItem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nombre del Cliente"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+                android:text="Nombre Cliente"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="#37474F" />
 
             <TextView
                 android:id="@+id/lblDetalleItem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Detalle del pedido..."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:maxLines="2"
+                android:textSize="14sp"
+                android:textColor="#78909C"
+                android:maxLines="1"
                 android:ellipsize="end"/>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/lblEstadoItem"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pendiente"
-            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/iconEstado"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_sync"
+                app:tint="#FFB74D"/>
+
+            <TextView
+                android:id="@+id/lblEstadoItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pendiente"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#FFB74D" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

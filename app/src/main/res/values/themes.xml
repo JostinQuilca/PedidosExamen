@@ -1,21 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Pedidos" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Paleta de colores primarios -->
-        <item name="colorPrimary">@color/orange_500</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorPrimaryContainer">@color/orange_200</item>
-        <item name="colorOnPrimaryContainer">@color/black</item>
 
-        <!-- Paleta de colores secundarios (opcional, pero bueno para consistencia) -->
-        <item name="colorSecondary">@color/orange_500</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <item name="colorSecondaryContainer">@color/orange_200</item>
-        <item name="colorOnSecondaryContainer">@color/black</item>
+    <style name="Theme.Pedidos" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/surface_white</item>
+        <item name="colorPrimaryContainer">@color/primary_variant</item>
+        <item name="colorOnPrimaryContainer">@color/surface_white</item>
 
-        <!-- Color de la barra de estado -->
-        <item name="android:statusBarColor">@color/orange_700</item>
+        <item name="android:statusBarColor">@color/background_light</item>
+        <item name="android:windowLightStatusBar">true</item> <item name="android:windowBackground">@color/background_light</item>
+
+        <item name="materialButtonStyle">@style/Widget.Material3.Button</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.Small</item>
     </style>
 
-    <style name="Theme.Pedidos" parent="Base.Theme.Pedidos" />
+    <style name="ShapeAppearance.App.Small" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
 </resources>

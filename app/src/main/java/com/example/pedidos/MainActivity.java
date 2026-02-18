@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -70,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         txtDetalle = findViewById(R.id.txtDetalle);
         lblGPS = findViewById(R.id.lblGPS);
         rgPago = findViewById(R.id.rgPago);
+
         btnScanQR = findViewById(R.id.btnScanQR);
         btnFoto = findViewById(R.id.btnFoto);
         btnGuardar = findViewById(R.id.btnGuardar);
@@ -119,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-
     // --- BLOQUE GPS ---
     @SuppressWarnings("MissingPermission")
     private void obtenerUbicacion() {
@@ -131,7 +130,9 @@ public class MainActivity extends AppCompatActivity {
             if (location != null) {
                 latitud = location.getLatitude();
                 longitud = location.getLongitude();
-                lblGPS.setText(String.format("Ubicación: %.4f, %.4f", latitud, longitud));
+                lblGPS.setText(String.format("Ubicación GPS: %.4f, %.4f", latitud, longitud));
+            } else {
+                lblGPS.setText("Ubicación: No detectada (Active GPS)");
             }
         });
     }
@@ -174,11 +175,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        // Resultado del QR
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if (result != null && result.getContents() != null) {
             llenarCamposDesdeQR(result.getContents());
             return;
         }
+
+        // Resultado de la Cámara
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bitmap bitmap = BitmapFactory.decodeFile(rutaImagenActual);
             imgFoto.setImageBitmap(bitmap);
@@ -186,21 +191,61 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // --- BLOQUE PARSEO QR MEJORADO ---
     private void llenarCamposDesdeQR(String qrString) {
         try {
+            // Limpieza básica por si el QR trae espacios extra al inicio/fin
+            qrString = qrString.trim();
+
+            // Formato esperado: CLIENTE=Juan Perez|TEL=0999999999|DIR=Av. Central y Loja
+            // Soportamos variaciones como espacios alrededor de los separadores
             String[] pares = qrString.split("\\|");
+
+            boolean algunDatoEncontrado = false;
+
             for (String par : pares) {
-                String[] keyVal = par.split("=");
+                // Dividimos solo en el primer '=' para no romper si el valor contiene un igual
+                String[] keyVal = par.split("=", 2);
+
                 if (keyVal.length == 2) {
                     String key = keyVal[0].trim().toUpperCase();
                     String value = keyVal[1].trim();
-                    if (key.equals("CLIENTE")) txtCliente.setText(value);
-                    if (key.equals("TEL")) txtTelefono.setText(value);
-                    if (key.equals("DIR")) txtDireccion.setText(value);
+
+                    switch (key) {
+                        case "CLIENTE":
+                        case "NOMBRE":
+                            txtCliente.setText(value);
+                            algunDatoEncontrado = true;
+                            break;
+                        case "TEL":
+                        case "TELEFONO":
+                        case "CELULAR":
+                            txtTelefono.setText(value);
+                            algunDatoEncontrado = true;
+                            break;
+                        case "DIR":
+                        case "DIRECCION":
+                            txtDireccion.setText(value);
+                            algunDatoEncontrado = true;
+                            break;
+                        case "DET":
+                        case "DETALLE":
+                            txtDetalle.setText(value); // Extra: Si el QR trae detalle
+                            algunDatoEncontrado = true;
+                            break;
+                    }
                 }
             }
+
+            if (algunDatoEncontrado) {
+                Toast.makeText(this, "✅ Datos cargados del QR", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "⚠️ El QR no tenía el formato esperado (CLAVE=VALOR|...)", Toast.LENGTH_LONG).show();
+            }
+
         } catch (Exception e) {
-            Toast.makeText(this, "Error al leer el código QR", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "❌ Error al leer el código QR", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
         }
     }
 
@@ -248,6 +293,7 @@ public class MainActivity extends AppCompatActivity {
         imgFoto.setVisibility(View.GONE); // Ocultar la imagen
         rutaImagenActual = "";
         rgPago.check(R.id.rbEfectivo);
+        // Volver a pedir ubicación para el siguiente pedido
         obtenerUbicacion();
     }
 }
