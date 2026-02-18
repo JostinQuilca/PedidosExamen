@@ -19,7 +19,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
@@ -53,6 +52,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         rvPedidos = findViewById(R.id.rvPedidos);
         btnSincronizar = findViewById(R.id.btnSincronizar);
@@ -70,8 +70,6 @@ public class ListaPedidosActivity extends AppCompatActivity {
 
     private void mostrarProgreso(boolean mostrar) {
         progressBar.setVisibility(mostrar ? View.VISIBLE : View.GONE);
-        rvPedidos.setVisibility(mostrar ? View.GONE : rvPedidos.getVisibility());
-        tvEmptyList.setVisibility(mostrar ? View.GONE : tvEmptyList.getVisibility());
         if (mostrar) {
             btnSincronizar.hide();
         } else {
@@ -105,6 +103,8 @@ public class ListaPedidosActivity extends AppCompatActivity {
                         pedidos.add(p);
                     } while (fila.moveToNext());
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             handler.post(() -> {
@@ -132,8 +132,11 @@ public class ListaPedidosActivity extends AppCompatActivity {
             List<Pedido> paraEnviar = new ArrayList<>();
             for (Pedido p : listaDatos) {
                 if ("Pendiente".equals(p.estado)) {
+                    // CONVERSIÓN SEGURA DE IMAGEN
                     if (p.fotoPath != null && !p.fotoPath.isEmpty()) {
                         p.fotoBase64 = convertirImagenABase64(p.fotoPath);
+                    } else {
+                        p.fotoBase64 = "";
                     }
                     paraEnviar.add(p);
                 }
@@ -142,7 +145,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
             if (paraEnviar.isEmpty()) {
                 handler.post(() -> {
                     mostrarProgreso(false);
-                    Toast.makeText(this, "Todo está sincronizado", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "No hay pendientes para enviar", Toast.LENGTH_SHORT).show();
                 });
                 return;
             }
@@ -150,28 +153,35 @@ public class ListaPedidosActivity extends AppCompatActivity {
             SharedPreferences prefs = getSharedPreferences("sesion_app", Context.MODE_PRIVATE);
             String token = "Bearer " + prefs.getString("token", "");
 
-            ApiService api = ApiClient.getClient().create(ApiService.class);
-            api.enviarPedidos(token, paraEnviar).enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    handler.post(() -> {
-                        if (response.isSuccessful()) {
-                            marcarComoSincronizados();
-                        } else {
-                            mostrarProgreso(false);
-                            Toast.makeText(ListaPedidosActivity.this, "Error en el servidor: " + response.code(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
+            try {
+                ApiService api = ApiClient.getClient().create(ApiService.class);
+                api.enviarPedidos(token, paraEnviar).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        handler.post(() -> {
+                            if (response.isSuccessful()) {
+                                marcarComoSincronizados();
+                            } else {
+                                mostrarProgreso(false);
+                                Toast.makeText(ListaPedidosActivity.this, "Error Servidor: " + response.code(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
 
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    handler.post(() -> {
-                        mostrarProgreso(false);
-                        Toast.makeText(ListaPedidosActivity.this, "Fallo de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-                }
-            });
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        handler.post(() -> {
+                            mostrarProgreso(false);
+                            Toast.makeText(ListaPedidosActivity.this, "Error Red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            } catch (Exception e) {
+                handler.post(() -> {
+                    mostrarProgreso(false);
+                    Toast.makeText(this, "Error al iniciar envío", Toast.LENGTH_SHORT).show();
+                });
+            }
         });
     }
 
@@ -183,7 +193,6 @@ public class ListaPedidosActivity extends AppCompatActivity {
                 cv.put("estado", "Sincronizado");
                 db.update("pedidos", cv, "estado=?", new String[]{"Pendiente"});
             }
-
             handler.post(() -> {
                 Toast.makeText(ListaPedidosActivity.this, "¡Sincronización completada!", Toast.LENGTH_LONG).show();
                 cargarPedidos();
@@ -191,23 +200,22 @@ public class ListaPedidosActivity extends AppCompatActivity {
         });
     }
 
+    // --- CORRECCIÓN CRÍTICA: Evitar Crash si la imagen falla ---
     private String convertirImagenABase64(String path) {
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 4;
+            options.inSampleSize = 4; // Reducir tamaño
             Bitmap bitmap = BitmapFactory.decodeFile(path, options);
+
+            if (bitmap == null) return ""; // Si la imagen no carga, devolvemos vacío en vez de crashear
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream);
             byte[] byteArray = outputStream.toByteArray();
             return Base64.encodeToString(byteArray, Base64.DEFAULT);
         } catch (Exception e) {
-            return "";
+            e.printStackTrace();
+            return ""; // En caso de error, devolver cadena vacía
         }
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
     }
 }
