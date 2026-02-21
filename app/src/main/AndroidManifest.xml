@@ -44,6 +44,11 @@
             android:exported="false"
             android:parentActivityName=".ListaPedidosActivity" />
 
+        <activity
+            android:name=".MapaRutaActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.pedidos.fileprovider"

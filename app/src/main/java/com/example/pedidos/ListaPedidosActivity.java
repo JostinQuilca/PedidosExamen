@@ -2,11 +2,13 @@ package com.example.pedidos;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,16 +18,22 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,6 +45,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
 
     private RecyclerView rvPedidos;
     private ExtendedFloatingActionButton btnSincronizar;
+    private ExtendedFloatingActionButton btnExportarCSV;
     private ProgressBar progressBar;
     private TextView tvEmptyList;
     private PedidoAdapter adapter;
@@ -44,6 +53,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private static final int REQUEST_CODE_CSV = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +71,7 @@ public class ListaPedidosActivity extends AppCompatActivity {
         // Enlazar Vistas
         rvPedidos = findViewById(R.id.rvPedidos);
         btnSincronizar = findViewById(R.id.btnSincronizar);
+        btnExportarCSV = findViewById(R.id.btnExportarCSV);
         progressBar = findViewById(R.id.progressBar);
         tvEmptyList = findViewById(R.id.tvEmptyList);
 
@@ -72,17 +83,93 @@ public class ListaPedidosActivity extends AppCompatActivity {
         // Cargar datos iniciales
         cargarPedidos();
 
-        // Listener Botón Sincronizar
+        // Listeners Botones
         btnSincronizar.setOnClickListener(v -> sincronizarPendientes());
+        btnExportarCSV.setOnClickListener(v -> exportarCSV());
     }
+
+    // =========================================================================
+    //   BONUS: EXPORTAR A CSV (VENTANA FLOTANTE NATIVA)
+    // =========================================================================
+
+    private void exportarCSV() {
+        if (listaDatos.isEmpty()) {
+            Toast.makeText(this, "No hay pedidos para exportar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Abrir ventana nativa de Android para guardar el archivo
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("text/csv");
+
+        String fecha = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        intent.putExtra(Intent.EXTRA_TITLE, "Pedidos_" + fecha + ".csv");
+
+        startActivityForResult(intent, REQUEST_CODE_CSV);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Si el usuario eligió dónde guardar y le dio a "Guardar"
+        if (requestCode == REQUEST_CODE_CSV && resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                escribirCSVEnRuta(data.getData());
+            }
+        }
+    }
+
+    private void escribirCSVEnRuta(Uri uri) {
+        try {
+            OutputStream outputStream = getContentResolver().openOutputStream(uri);
+            if (outputStream == null) return;
+
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+
+            // Escribir Cabeceras
+            writer.append("ID,Cliente,Telefono,Direccion,Detalle,TipoPago,Estado,Latitud,Longitud\n");
+
+            // Escribir Datos
+            for (Pedido p : listaDatos) {
+                writer.append(String.valueOf(p.id)).append(",")
+                        .append("\"").append(p.cliente != null ? p.cliente.replace("\"", "\"\"") : "").append("\",")
+                        .append("\"").append(p.telefono != null ? p.telefono : "").append("\",")
+                        .append("\"").append(p.direccion != null ? p.direccion.replace("\"", "\"\"") : "").append("\",")
+                        .append("\"").append(p.detalle != null ? p.detalle.replace("\"", "\"\"") : "").append("\",")
+                        .append(p.tipoPago != null ? p.tipoPago : "").append(",")
+                        .append(p.estado != null ? p.estado : "").append(",")
+                        .append(String.valueOf(p.latitud)).append(",")
+                        .append(String.valueOf(p.longitud)).append("\n");
+            }
+
+            writer.flush();
+            writer.close();
+            outputStream.close();
+
+            Toast.makeText(this, "✅ Archivo CSV guardado correctamente", Toast.LENGTH_LONG).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "❌ Error al guardar el archivo", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // =========================================================================
+    //   LÓGICA DE BASE DE DATOS Y SINCRONIZACIÓN
+    // =========================================================================
 
     private void mostrarProgreso(boolean mostrar) {
         progressBar.setVisibility(mostrar ? View.VISIBLE : View.GONE);
         if (mostrar) {
             btnSincronizar.hide();
+            btnExportarCSV.hide();
         } else {
-            // Solo mostramos el botón si hay datos
-            if (!listaDatos.isEmpty()) btnSincronizar.show();
+            if (!listaDatos.isEmpty()) {
+                btnSincronizar.show();
+                btnExportarCSV.show();
+            }
         }
     }
 
@@ -90,7 +177,6 @@ public class ListaPedidosActivity extends AppCompatActivity {
         mostrarProgreso(true);
         executorService.execute(() -> {
             List<Pedido> pedidos = new ArrayList<>();
-            // Leemos TODAS las columnas necesarias, incluyendo fecha y coordenadas
             try (AdminSQLite admin = new AdminSQLite(this, "administracion", null, 1);
                  SQLiteDatabase db = admin.getReadableDatabase();
                  Cursor fila = db.rawQuery("SELECT id, cliente, detalle, foto_path, estado, telefono, direccion, tipo_pago, fecha, latitud, longitud FROM pedidos ORDER BY id DESC", null)) {
@@ -104,7 +190,6 @@ public class ListaPedidosActivity extends AppCompatActivity {
                                 fila.getString(fila.getColumnIndexOrThrow("foto_path")),
                                 fila.getString(fila.getColumnIndexOrThrow("estado"))
                         );
-                        // Cargar campos opcionales de manera segura
                         p.telefono = fila.getString(fila.getColumnIndexOrThrow("telefono"));
                         p.direccion = fila.getString(fila.getColumnIndexOrThrow("direccion"));
                         p.tipoPago = fila.getString(fila.getColumnIndexOrThrow("tipo_pago"));
@@ -128,10 +213,12 @@ public class ListaPedidosActivity extends AppCompatActivity {
                     rvPedidos.setVisibility(View.GONE);
                     tvEmptyList.setVisibility(View.VISIBLE);
                     btnSincronizar.hide();
+                    btnExportarCSV.hide();
                 } else {
                     rvPedidos.setVisibility(View.VISIBLE);
                     tvEmptyList.setVisibility(View.GONE);
                     btnSincronizar.show();
+                    btnExportarCSV.show();
                 }
             });
         });
@@ -143,7 +230,6 @@ public class ListaPedidosActivity extends AppCompatActivity {
             List<Pedido> paraEnviar = new ArrayList<>();
             for (Pedido p : listaDatos) {
                 if ("Pendiente".equals(p.estado)) {
-                    // CONVERSIÓN SEGURA DE IMAGEN (Usando el método blindado de abajo)
                     if (p.fotoPath != null && !p.fotoPath.isEmpty()) {
                         p.fotoBase64 = convertirImagenABase64(p.fotoPath);
                     } else {
@@ -211,48 +297,29 @@ public class ListaPedidosActivity extends AppCompatActivity {
         });
     }
 
-    // =========================================================================
-    //   MÉTODOS BLINDADOS PARA IMÁGENES (EVITAN OUT OF MEMORY ERROR)
-    // =========================================================================
-
     private String convertirImagenABase64(String path) {
-        // 1. Si no hay path, devolver vacío
         if (path == null || path.isEmpty()) return "";
-
         try {
-            // 2. Configurar para LEER dimensiones sin cargar la imagen (ahorra memoria)
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(path, options);
-
-            // 3. Calcular factor de reducción (para que la imagen no pase de 800px)
             options.inSampleSize = calcularInSampleSize(options, 800, 800);
-
-            // 4. Cargar la imagen reducida
             options.inJustDecodeBounds = false;
             Bitmap bitmap = BitmapFactory.decodeFile(path, options);
 
             if (bitmap == null) return "";
-
-            // 5. Comprimir a JPEG calidad 50%
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
             byte[] byteArray = outputStream.toByteArray();
 
-            // 6. Reciclar memoria inmediatamente
             bitmap.recycle();
-
-            // 7. Retornar Base64 sin saltos de línea (NO_WRAP)
             return Base64.encodeToString(byteArray, Base64.NO_WRAP);
-
         } catch (Throwable e) {
-            // Usamos 'Throwable' para atrapar errores graves de Memoria (OutOfMemoryError)
             e.printStackTrace();
-            return ""; // Si falla, enviamos vacío pero NO CERRAMOS la app
+            return "";
         }
     }
 
-    // Método auxiliar matemático para calcular cuánto reducir la foto
     private int calcularInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -261,11 +328,10 @@ public class ListaPedidosActivity extends AppCompatActivity {
         if (height > reqHeight || width > reqWidth) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
-            // Calcular la potencia de 2 más grande que mantenga ambas dimensiones mayores a lo requerido
             while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
                 inSampleSize *= 2;
             }
         }
         return inSampleSize;
     }
-}
+} 

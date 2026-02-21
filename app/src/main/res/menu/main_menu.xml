@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_mapa"
+        android:title="Ver Ruta"
+        android:icon="@android:drawable/ic_dialog_map"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_logout"
         android:title="Cerrar Sesión"
         android:icon="@drawable/ic_logout"

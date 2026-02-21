@@ -102,6 +102,12 @@ public class MainActivity extends AppCompatActivity {
             logout();
             return true;
         }
+        // ¡NUEVA LÓGICA AQUÍ!
+        else if (item.getItemId() == R.id.action_mapa) {
+            Intent intent = new Intent(MainActivity.this, MapaRutaActivity.class);
+            startActivity(intent);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
